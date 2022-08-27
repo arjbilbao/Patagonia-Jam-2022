@@ -6,9 +6,13 @@ public class LaunchData : MonoBehaviour
 {
 
     public GameObject planet1, planet2, earth, sun;
-    private float AU, AxisMajorP1toP2,DistanceP1P2, AngleP1toP2, P1DotP2,P1Mag,P2Mag, distancePlanet1FromSun, distancePlanet2FromSun, SAMP1, SAMP2, PP1, earthP, timer=0f, number2=361f;
-    public float K, PHTO,PHTOV, SAMH1, SAMH2,P2Angle,P2AngleV, PP2;
-    private Vector3 planet1FromSun, planet2FromSun;
+     [HideInInspector]
+    public float AU, AxisMajorP1toP2,DistanceP1P2, P1DotP2,P1Mag,P2Mag, distancePlanet1FromSun, distancePlanet2FromSun, SAMP1, SAMP2, PP1, earthP, timer=0f;
+    public float K, PHTO=0f,PHTOV,HTOD,HTODV, SAMH1, SAMH2=0f,P2Angle,P2AngleV, PP2, AngleP1toP2, number2;
+    [HideInInspector]
+    public Vector3 planet1FromSun, planet2FromSun;
+    public LineRenderer LinePlanet1, LinePlanet2;
+    public bool minimunSAM=true;
     // Start is called before the first frame update
     void Start()
     {
@@ -17,8 +21,12 @@ public class LaunchData : MonoBehaviour
 
     // Update is called once per frame
     void Update()
-    {           
-        
+    {            
+
+
+         if(planet2.GetComponent<PlanetData>().calculated){
+
+                     LaunchLines();
                 //Astronomy Unit
                AU = Vector3.Distance(earth.transform.position,sun.transform.position);
 
@@ -51,23 +59,43 @@ public class LaunchData : MonoBehaviour
                 K=(PP1*PP1)/(SAMP1*SAMP1*SAMP1);
                 SAMH1=(SAMP1+SAMP2)/2;
                 
+                    
+                  
+                      
+                   SAMH2=Minimun(SAMH1,planet2.GetComponent<PlanetData>().P);    
                 
-                SAMH2=Minimun(SAMH1,3*planet2.GetComponent<PlanetData>().P);
-                
+    
+                HTODV = Vector3.Distance(planet1.transform.position,planet2.transform.position);
                 if(SAMH2>0)
                 {
-                     
+                    minimunSAM=false;
+                    timer=0;
                          PHTO=((K*Mathf.Sqrt(Mathf.Pow(SAMH2,3)))/2)*365f;
+                         HTOD = Vector3.Distance(planet1.transform.position,planet2.transform.position);
                 }
                 PHTOV =((K*Mathf.Sqrt(Mathf.Pow(SAMH1,3)))/2)*365f;
 
 
                 PP2=((planet2.GetComponent<PlanetData>().P)/earthP)*365;
-                P2Angle=180-(PHTO*(360/PP2));
-                P2AngleV=180-(PHTOV*(360/PP2));
-               
 
+
+                P2Angle=180-(PHTO*(360/PP2));
+                if(P2Angle<0)
+                {
+
+                    P2Angle=-P2Angle;
+                }
+                P2AngleV=180-(PHTOV*(360/PP2));
+
+                if(P2AngleV<0)
+                {
+
+                    P2AngleV=-P2AngleV;
+                }
             //Debug.Log(AngleP1toP2);
+         }
+
+               
 
     }
 
@@ -102,5 +130,33 @@ public class LaunchData : MonoBehaviour
     }
 
 
+    void LaunchLines()
+    {
+
+        LinePlanet1.SetPosition(0,transform.position);
+        LinePlanet1.SetPosition(1,planet1.transform.position);
+        LinePlanet2.SetPosition(0,transform.position);
+        LinePlanet2.SetPosition(1,planet2.transform.position);
+    }
+
+        void OnDrawGizmos()
+{
+      Gizmos.color = Color.yellow;
+    float rayRange = 10.0f;
+    float halfFOV = P2AngleV / 2.0f;
+    float coneDirection = 180;
+
+    Quaternion upRayRotation = Quaternion.AngleAxis(-halfFOV + coneDirection, planet1FromSun);
+    Quaternion downRayRotation = Quaternion.AngleAxis(halfFOV + coneDirection, planet2FromSun);
+
+    Vector3 upRayDirection = upRayRotation * planet1FromSun;
+    Vector3 downRayDirection = downRayRotation * planet2FromSun;
+
+    Gizmos.DrawRay(transform.position, upRayDirection);
+    Gizmos.DrawRay(transform.position, downRayDirection);
+   
+}
+
+        
 
 }
